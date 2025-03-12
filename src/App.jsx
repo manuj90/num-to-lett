@@ -11,98 +11,115 @@ function App() {
 
   // Normaliza el número con BigNumber
   const normalizeNumber = (value) => {
-  const cleanInput = value.replace(/[$\s]/g, '');
-  const parts = cleanInput.split(/([,.])/);
+    const cleanInput = value.replace(/[$\s]/g, '');
+    const parts = cleanInput.split(/([,.])/);
 
-  let integerPart = '';
-  let decimalPart = '';
-  let lastSeparatorIndex = -1;
+    let integerPart = '';
+    let decimalPart = '';
+    let lastSeparatorIndex = -1;
 
-  for (let i = parts.length - 1; i >= 0; i--) {
-    if (parts[i] === ',' || parts[i] === '.') {
-      lastSeparatorIndex = i;
-      break;
+    for (let i = parts.length - 1; i >= 0; i--) {
+      if (parts[i] === ',' || parts[i] === '.') {
+        lastSeparatorIndex = i;
+        break;
+      }
     }
-  }
 
-  if (lastSeparatorIndex === -1) {
-    integerPart = parts.join('');
-  } else {
-    integerPart = parts
-      .slice(0, lastSeparatorIndex)
-      .filter(part => part !== '.' && part !== ',')
-      .join('');
-    decimalPart = parts.slice(lastSeparatorIndex + 1).join('');
-  }
+    if (lastSeparatorIndex === -1) {
+      integerPart = parts.join('');
+    } else {
+      integerPart = parts
+        .slice(0, lastSeparatorIndex)
+        .filter(part => part !== '.' && part !== ',')
+        .join('');
+      decimalPart = parts.slice(lastSeparatorIndex + 1).join('');
+    }
 
-  if (decimalPart.length > 2) {
-    const decimalsToKeep = decimalPart.slice(0, 2);
-    const nextDigit = parseInt(decimalPart[2], 10);
-    let roundedDecimals = parseInt(decimalsToKeep, 10);
-    if (nextDigit >= 5) roundedDecimals += 1;
-    decimalPart = roundedDecimals.toString().padStart(2, '0');
-  } else {
-    decimalPart = decimalPart.padEnd(2, '0').slice(0, 2);
-  }
+    if (decimalPart.length > 2) {
+      const decimalsToKeep = decimalPart.slice(0, 2);
+      const nextDigit = parseInt(decimalPart[2], 10);
+      let roundedDecimals = parseInt(decimalsToKeep, 10);
+      if (nextDigit >= 5) roundedDecimals += 1;
+      decimalPart = roundedDecimals.toString().padStart(2, '0');
+    } else {
+      decimalPart = decimalPart.padEnd(2, '0').slice(0, 2);
+    }
 
-  const number = new BigNumber(`${integerPart}.${decimalPart}`);
-  return number.isNaN() ? NaN : number;
-};
+    const number = new BigNumber(`${integerPart}.${decimalPart}`);
+    return number.isNaN() ? NaN : number;
+  };
 
   // Convierte números a palabras
-const numberToWords = (num) => {
-  const units = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
-  const teens = ['diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve'];
-  const tens = ['', 'diez', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
-  const hundreds = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+  const numberToWords = (num) => {
+    const units = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
+    const teens = ['diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve'];
+    const tens = ['', 'diez', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+    const hundreds = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
 
-  if (num.eq(0)) return ''; // No agregar "cero" en restos
-  if (num.eq(100)) return 'cien';
+    if (num.isZero()) return ''; // No agregar "cero" en restos
+    if (num.eq(100)) return 'cien';
 
-  const BN = BigNumber;
-  if (num.gte(1e15)) {
-    const quintillions = num.div(1e15).integerValue(BN.ROUND_FLOOR);
-    return `${numberToWords(quintillions)} ${quintillions.eq(1) ? 'quintillón' : 'quintillones'} ${numberToWords(num.mod(1e15))}`.trim();
-  }
-  if (num.gte(1e12)) {
-    const trillions = num.div(1e12).integerValue(BN.ROUND_FLOOR);
-    return `${numberToWords(trillions)} ${trillions.eq(1) ? 'trillón' : 'trillones'} ${numberToWords(num.mod(1e12))}`.trim();
-  }
-  if (num.gte(1e9)) {
-    const billions = num.div(1e9).integerValue(BN.ROUND_FLOOR);
-    return `${numberToWords(billions)} ${billions.eq(1) ? 'billón' : 'billones'} ${numberToWords(num.mod(1e9))}`.trim();
-  }
-  if (num.gte(1e6)) {
-    const millions = num.div(1e6).integerValue(BN.ROUND_FLOOR);
-    return `${numberToWords(millions)} ${millions.eq(1) ? 'millón' : 'millones'} ${numberToWords(num.mod(1e6))}`.trim();
-  }
-  if (num.gte(1000)) {
-    const thousands = num.div(1000).integerValue(BN.ROUND_FLOOR);
-    return `${thousands.eq(1) ? 'mil' : `${numberToWords(thousands)} mil`} ${numberToWords(num.mod(1000))}`.trim();
-  }
-  if (num.gte(100)) {
-    const hundred = num.div(100).integerValue(BN.ROUND_FLOOR);
-    return `${hundreds[hundred.toNumber()]} ${numberToWords(num.mod(100))}`.trim();
-  }
-  if (num.gte(20)) {
-    const ten = num.div(10).integerValue(BN.ROUND_FLOOR);
-    const unit = num.mod(10);
-    return `${tens[ten.toNumber()]}${unit.gt(0) ? (ten.eq(2) ? 'i' : ' y ') + units[unit.toNumber()] : ''}`;
-  }
-  if (num.gte(10)) return teens[num.minus(10).toNumber()];
-  return units[num.toNumber()];
-};
+    const BN = BigNumber;
+    if (num.gte(1e15)) {
+      const quintillions = num.div(1e15).integerValue(BN.ROUND_FLOOR);
+      const remainder = num.mod(1e15);
+      const remainderWords = remainder.isZero() ? '' : numberToWords(remainder);
+      return `${numberToWords(quintillions)} ${quintillions.eq(1) ? 'quintillón' : 'quintillones'}${remainderWords ? ' ' + remainderWords : ''}`;
+    }
+    if (num.gte(1e12)) {
+      const trillions = num.div(1e12).integerValue(BN.ROUND_FLOOR);
+      const remainder = num.mod(1e12);
+      const remainderWords = remainder.isZero() ? '' : numberToWords(remainder);
+      return `${numberToWords(trillions)} ${trillions.eq(1) ? 'trillón' : 'trillones'}${remainderWords ? ' ' + remainderWords : ''}`;
+    }
+    if (num.gte(1e9)) {
+      const billions = num.div(1e9).integerValue(BN.ROUND_FLOOR);
+      const remainder = num.mod(1e9);
+      const remainderWords = remainder.isZero() ? '' : numberToWords(remainder);
+      return `${numberToWords(billions)} ${billions.eq(1) ? 'billón' : 'billones'}${remainderWords ? ' ' + remainderWords : ''}`;
+    }
+    if (num.gte(1e6)) {
+      const millions = num.div(1e6).integerValue(BN.ROUND_FLOOR);
+      const remainder = num.mod(1e6);
+      const remainderWords = remainder.isZero() ? '' : numberToWords(remainder);
+      return `${numberToWords(millions)} ${millions.eq(1) ? 'millón' : 'millones'}${remainderWords ? ' ' + remainderWords : ''}`;
+    }
+    if (num.gte(1000)) {
+      const thousands = num.div(1000).integerValue(BN.ROUND_FLOOR);
+      const remainder = num.mod(1000);
+      const remainderWords = remainder.isZero() ? '' : numberToWords(remainder);
+      return `${thousands.eq(1) ? 'mil' : `${numberToWords(thousands)} mil`}${remainderWords ? ' ' + remainderWords : ''}`;
+    }
+    if (num.gte(100)) {
+      const hundred = num.div(100).integerValue(BN.ROUND_FLOOR);
+      const remainder = num.mod(100);
+      const remainderWords = remainder.isZero() ? '' : numberToWords(remainder);
+      return `${hundreds[hundred.toNumber()]}${remainderWords ? ' ' + remainderWords : ''}`;
+    }
+    if (num.gte(20)) {
+      const ten = num.div(10).integerValue(BN.ROUND_FLOOR);
+      const unit = num.mod(10);
+      return `${tens[ten.toNumber()]}${unit.gt(0) ? (ten.eq(2) ? 'i' : ' y ') + units[unit.toNumber()] : ''}`;
+    }
+    if (num.gte(10)) return teens[num.minus(10).toNumber()];
+    return units[num.toNumber()];
+  };
 
   // Convierte el número completo (entero + decimal)
-const convertToWords = (number) => {
-  if (number.isNaN()) return 'Ingresa un número válido';
-  const integer = number.integerValue(BigNumber.ROUND_FLOOR);
-  const decimalFraction = number.minus(integer);
-  const decimal = decimalFraction.times(100).integerValue(BigNumber.ROUND_FLOOR);
-  const integerWords = numberToWords(integer) || 'cero'; // Si la parte entera es 0, usar "cero"
-  const decimalWords = ` con ${numberToWords(decimal) || 'cero'} centésimos`; // Siempre incluir centésimos
-  return `${integerWords}${decimalWords}`.trim();
-};
+  const convertToWords = (number) => {
+    if (number.isNaN()) return 'Ingresa un número válido';
+    const integer = number.integerValue(BigNumber.ROUND_FLOOR);
+    const decimalFraction = number.minus(integer);
+    const decimal = decimalFraction.times(100).integerValue(BigNumber.ROUND_FLOOR);
+    
+    // Si la parte entera es 0, usar "cero"
+    const integerWords = integer.isZero() ? 'cero' : numberToWords(integer);
+    
+    // Siempre incluir centésimos 
+    const decimalWords = ` con ${decimal.isZero() ? 'cero' : numberToWords(decimal)} centésimos`; 
+    
+    return `${integerWords}${decimalWords}`.trim();
+  };
 
   // Maneja la conversión al presionar "Convertir"
   const handleConvert = (e) => {
