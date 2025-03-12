@@ -11,31 +11,43 @@ function App() {
 
   // Normaliza el número con BigNumber
   const normalizeNumber = (value) => {
-    const cleanInput = value.replace(/[$\s]/g, '');
-    const parts = cleanInput.split(/[,|.]/);
-    let integerPart = '';
-    let decimalPart = '';
+  const cleanInput = value.replace(/[$\s]/g, '');
+  const parts = cleanInput.split(/([,.])/);
 
-    if (parts.length > 1) {
-      decimalPart = parts.pop();
-      integerPart = parts.join('');
-    } else {
-      integerPart = parts[0];
+  let integerPart = '';
+  let decimalPart = '';
+  let lastSeparatorIndex = -1;
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (parts[i] === ',' || parts[i] === '.') {
+      lastSeparatorIndex = i;
+      break;
     }
+  }
 
-    if (decimalPart.length > 2) {
-      const decimalsToKeep = decimalPart.slice(0, 2);
-      const nextDigit = parseInt(decimalPart[2], 10);
-      let roundedDecimals = parseInt(decimalsToKeep, 10);
-      if (nextDigit >= 5) roundedDecimals += 1;
-      decimalPart = roundedDecimals.toString().padStart(2, '0');
-    } else {
-      decimalPart = decimalPart.padEnd(2, '0').slice(0, 2);
-    }
+  if (lastSeparatorIndex === -1) {
+    integerPart = parts.join('');
+  } else {
+    integerPart = parts
+      .slice(0, lastSeparatorIndex)
+      .filter(part => part !== '.' && part !== ',')
+      .join('');
+    decimalPart = parts.slice(lastSeparatorIndex + 1).join('');
+  }
 
-    const number = new BigNumber(`${integerPart}.${decimalPart}`);
-    return number.isNaN() ? NaN : number;
-  };
+  if (decimalPart.length > 2) {
+    const decimalsToKeep = decimalPart.slice(0, 2);
+    const nextDigit = parseInt(decimalPart[2], 10);
+    let roundedDecimals = parseInt(decimalsToKeep, 10);
+    if (nextDigit >= 5) roundedDecimals += 1;
+    decimalPart = roundedDecimals.toString().padStart(2, '0');
+  } else {
+    decimalPart = decimalPart.padEnd(2, '0').slice(0, 2);
+  }
+
+  const number = new BigNumber(`${integerPart}.${decimalPart}`);
+  return number.isNaN() ? NaN : number;
+};
 
   // Convierte números a palabras
 const numberToWords = (num) => {
@@ -44,7 +56,7 @@ const numberToWords = (num) => {
   const tens = ['', 'diez', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
   const hundreds = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
 
-  if (num.eq(0)) return ''; // Cambiar "cero" a cadena vacía para restos
+  if (num.eq(0)) return ''; // No agregar "cero" en restos
   if (num.eq(100)) return 'cien';
 
   const BN = BigNumber;
