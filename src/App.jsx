@@ -9,44 +9,42 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [isConverted, setIsConverted] = useState(false);
 
-  // Normaliza el número con BigNumber
+  // Normaliza el número con BigNumber - FUNCIÓN CORREGIDA
   const normalizeNumber = (value) => {
+    // Eliminar símbolo de moneda y espacios
     const cleanInput = value.replace(/[$\s]/g, '');
-    const parts = cleanInput.split(/([,.])/);
-
-    let integerPart = '';
-    let decimalPart = '';
-    let lastSeparatorIndex = -1;
-
-    for (let i = parts.length - 1; i >= 0; i--) {
-      if (parts[i] === ',' || parts[i] === '.') {
-        lastSeparatorIndex = i;
-        break;
-      }
-    }
-
-    if (lastSeparatorIndex === -1) {
-      integerPart = parts.join('');
+    
+    // Detectar el formato de entrada
+    const formatWithDot = /^\d{1,3}(\.\d{3})*,\d*$/.test(cleanInput); // Formato: 2.050.300,56
+    const formatWithComma = /^\d{1,3}(,\d{3})*\.\d*$/.test(cleanInput); // Formato: 2,050,300.56
+    
+    let processedNumber;
+    
+    if (formatWithDot) {
+      // Formato europeo/latinoamericano: 2.050.300,56
+      // Reemplazar puntos y convertir coma a punto decimal
+      processedNumber = cleanInput.replace(/\./g, '').replace(',', '.');
+    } else if (formatWithComma) {
+      // Formato anglosajón: 2,050,300.56
+      // Reemplazar comas
+      processedNumber = cleanInput.replace(/,/g, '');
+    } else if (cleanInput.includes(',')) {
+      // Si hay una coma pero no cumple el patrón, asumimos que es decimal
+      processedNumber = cleanInput.replace(',', '.');
     } else {
-      integerPart = parts
-        .slice(0, lastSeparatorIndex)
-        .filter(part => part !== '.' && part !== ',')
-        .join('');
-      decimalPart = parts.slice(lastSeparatorIndex + 1).join('');
+      // Si no hay comas ni puntos o solo hay puntos, dejamos como está
+      processedNumber = cleanInput;
     }
-
-    if (decimalPart.length > 2) {
-      const decimalsToKeep = decimalPart.slice(0, 2);
-      const nextDigit = parseInt(decimalPart[2], 10);
-      let roundedDecimals = parseInt(decimalsToKeep, 10);
-      if (nextDigit >= 5) roundedDecimals += 1;
-      decimalPart = roundedDecimals.toString().padStart(2, '0');
-    } else {
-      decimalPart = decimalPart.padEnd(2, '0').slice(0, 2);
+    
+    // Convertir a BigNumber y asegurar 2 decimales
+    const number = new BigNumber(processedNumber);
+    
+    // Si es un número válido, redondear a 2 decimales
+    if (!number.isNaN()) {
+      return number.decimalPlaces(2, BigNumber.ROUND_HALF_UP);
     }
-
-    const number = new BigNumber(`${integerPart}.${decimalPart}`);
-    return number.isNaN() ? NaN : number;
+    
+    return number; // Devolver NaN si no es válido
   };
 
   // Convierte números a palabras
@@ -82,7 +80,7 @@ function App() {
       const millions = num.div(1e6).integerValue(BN.ROUND_FLOOR);
       const remainder = num.mod(1e6);
       const remainderWords = remainder.isZero() ? '' : numberToWords(remainder);
-      return `${numberToWords(millions)} ${millions.eq(1) ? 'millón' : 'millones'}${remainderWords ? ' ' + remainderWords : ''}`;
+      return `${millions.eq(1) ? 'un millón' : `${numberToWords(millions)} millones`}${remainderWords ? ' ' + remainderWords : ''}`;
     }
     if (num.gte(1000)) {
       const thousands = num.div(1000).integerValue(BN.ROUND_FLOOR);
@@ -132,6 +130,7 @@ function App() {
     setLoading(true);
     setTimeout(() => {
       const normalized = normalizeNumber(input);
+      console.log("Número normalizado:", normalized.toString()); // Debugging
       const words = convertToWords(normalized);
       setResult(words.charAt(0).toUpperCase() + words.slice(1));
       setLoading(false);
