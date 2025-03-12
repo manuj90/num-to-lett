@@ -12,10 +12,10 @@ function App() {
   const normalizeNumber = (value) => {
     const cleanInput = value.replace(/[$\s]/g, '');
 
-    const formatWithDot = /^\d{1,3}(\.\d{3})*,\d*$/.test(cleanInput); // Ej: 2.050.300,56
-    const formatWithComma = /^\d{1,3}(,\d{3})*\.\d*$/.test(cleanInput); // Ej: 2,050,300.56
-    const onlyDots = /^\d{1,3}(\.\d{3})*$/.test(cleanInput); // Ej: 2.000.000
-    const onlyCommas = /^\d{1,3}(,\d{3})*$/.test(cleanInput); // Ej: 2,000,003
+    const formatWithDot = /^\d{1,3}(\.\d{3})*,\d*$/.test(cleanInput); 
+    const formatWithComma = /^\d{1,3}(,\d{3})*\.\d*$/.test(cleanInput); 
+    const onlyDots = /^\d{1,3}(\.\d{3})*$/.test(cleanInput); 
+    const onlyCommas = /^\d{1,3}(,\d{3})*$/.test(cleanInput); 
 
     let processedNumber;
 
