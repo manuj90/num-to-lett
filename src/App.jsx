@@ -10,40 +10,31 @@ function App() {
 
   // Normaliza el número con BigNumber - FUNCIÓN CORREGIDA
   const normalizeNumber = (value) => {
-    // Eliminar símbolo de moneda y espacios
     const cleanInput = value.replace(/[$\s]/g, '');
-    
-    // Detectar el formato de entrada
-    const formatWithDot = /^\d{1,3}(\.\d{3})*,\d*$/.test(cleanInput); // Formato: 2.050.300,56
-    const formatWithComma = /^\d{1,3}(,\d{3})*\.\d*$/.test(cleanInput); // Formato: 2,050,300.56
-    
+
+    const formatWithDot = /^\d{1,3}(\.\d{3})*,\d*$/.test(cleanInput); // Ej: 2.050.300,56
+    const formatWithComma = /^\d{1,3}(,\d{3})*\.\d*$/.test(cleanInput); // Ej: 2,050,300.56
+    const onlyDots = /^\d{1,3}(\.\d{3})*$/.test(cleanInput); // Ej: 2.000.000
+
     let processedNumber;
-    
+
     if (formatWithDot) {
-      // Formato europeo/latinoamericano: 2.050.300,56
-      // Reemplazar puntos y convertir coma a punto decimal
       processedNumber = cleanInput.replace(/\./g, '').replace(',', '.');
     } else if (formatWithComma) {
-      // Formato anglosajón: 2,050,300.56
-      // Reemplazar comas
       processedNumber = cleanInput.replace(/,/g, '');
+    } else if (onlyDots) {
+      processedNumber = cleanInput.replace(/\./g, '');
     } else if (cleanInput.includes(',')) {
-      // Si hay una coma pero no cumple el patrón, asumimos que es decimal
       processedNumber = cleanInput.replace(',', '.');
     } else {
-      // Si no hay comas ni puntos o solo hay puntos, dejamos como está
       processedNumber = cleanInput;
     }
-    
-    // Convertir a BigNumber y asegurar 2 decimales
+
     const number = new BigNumber(processedNumber);
-    
-    // Si es un número válido, redondear a 2 decimales
     if (!number.isNaN()) {
       return number.decimalPlaces(2, BigNumber.ROUND_HALF_UP);
     }
-    
-    return number; // Devolver NaN si no es válido
+    return number;
   };
 
   // Convierte números a palabras
@@ -53,7 +44,7 @@ function App() {
     const tens = ['', 'diez', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
     const hundreds = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
 
-    if (num.isZero()) return ''; // No agregar "cero" en restos
+    if (num.isZero()) return '';
     if (num.eq(100)) return 'cien';
 
     const BN = BigNumber;
@@ -109,11 +100,8 @@ function App() {
     const decimalFraction = number.minus(integer);
     const decimal = decimalFraction.times(100).integerValue(BigNumber.ROUND_FLOOR);
     
-    // Si la parte entera es 0, usar "cero"
     const integerWords = integer.isZero() ? 'cero' : numberToWords(integer);
-    
-    // Siempre incluir centésimos 
-    const decimalWords = ` con ${decimal.isZero() ? 'cero' : numberToWords(decimal)} centésimos`; 
+    const decimalWords = ` con ${decimal.isZero() ? 'cero' : numberToWords(decimal)} centésimos`;
     
     return `${integerWords}${decimalWords}`.trim();
   };
@@ -129,7 +117,7 @@ function App() {
     setLoading(true);
     setTimeout(() => {
       const normalized = normalizeNumber(input);
-      console.log("Número normalizado:", normalized.toString()); // Debugging
+      console.log("Número normalizado:", normalized.toString()); // Para depuración
       const words = convertToWords(normalized);
       setResult(words.charAt(0).toUpperCase() + words.slice(1));
       setLoading(false);
